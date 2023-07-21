@@ -1,4 +1,4 @@
-// algorithm impl by go
+// algorithm test
 package algo
 
 import (
