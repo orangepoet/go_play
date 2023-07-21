@@ -1,3 +1,4 @@
+// algorithm impl by go
 package algo
 
 import (
