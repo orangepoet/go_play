@@ -7,10 +7,10 @@ import (
 
 // start guess
 func Start() {
-	flightMap := makeFlightMap(10)
+	config := Config{mapSize: 10, flightGroupSize: 3}
 
 	start := time.Now()
-	flightGroups := flightMap.listFlightGroup(3)
+	flightGroups := listFlightGroup(config)
 
 	expected := []Flight{makeUpFlight(Position{3, 3}), makeDownFlight(Position{6, 6}), makeDownFlight(Position{8, 10})}
 
