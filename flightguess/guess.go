@@ -7,12 +7,13 @@ import (
 
 // start guess
 func Start() {
-	config := Config{mapSize: 10, flightGroupSize: 3}
 
 	start := time.Now()
-	flightGroups := listFlightGroup(config)
+	flightGroups := listFlightGroup()
 
-	expected := []Flight{makeUpFlight(Position{3, 3}), makeDownFlight(Position{6, 6}), makeDownFlight(Position{8, 10})}
+	expected := []*Flight{
+		makeFlight(Position{3, 3}, UP), makeFlight(Position{6, 6}, DOWN), makeFlight(Position{8, 10}, DOWN),
+	}
 
 	left := len(expected)
 
@@ -46,48 +47,48 @@ func Start() {
 }
 
 // branch reduction
-func refreshGroups(groups [][]Flight, p Position, result int) [][]Flight {
+func refreshGroups(groups []FlightGroup, p Position, result int) []FlightGroup {
 	removes := map[int]bool{}
-	for idx, fs := range groups {
-		if !filterGroup(fs, p, result) {
+	for idx, g := range groups {
+		if !filterGroup(g, p, result) {
 			removes[idx] = true
 		}
 	}
-	x := [][]Flight{}
+	gs := make([]FlightGroup, 0)
 	for idx, flights := range groups {
 		if _, ok := removes[idx]; !ok {
-			x = append(x, flights)
+			gs = append(gs, flights)
 		}
 	}
-	return x
+	return gs
 }
 
 // false: need to remove, true: keep
-func filterGroup(group []Flight, p Position, r int) bool {
+func filterGroup(group FlightGroup, p Position, r int) bool {
 	switch r {
-	case 0:
+	case 0: // none
 		for _, flight := range group {
-			if p.isPart(flight) {
+			if p.isPartOf(flight) {
 				return false
 			}
 		}
 		return true
-	case 1:
+	case 1: // body
 		for _, flight := range group {
-			if p.isHead(flight) {
+			if p.isHeadOf(flight) {
 				return false
 			}
-			if p.isBody(flight) {
+			if p.isBodyOf(flight) {
 				return true
 			}
 		}
 		return false
-	case 2:
+	case 2: // head
 		for _, flight := range group {
-			if p.isBody(flight) {
+			if p.isBodyOf(flight) {
 				return false
 			}
-			if p.isHead(flight) {
+			if p.isHeadOf(flight) {
 				return true
 			}
 		}
@@ -97,7 +98,7 @@ func filterGroup(group []Flight, p Position, r int) bool {
 }
 
 // guess next
-func guessNext(flightUnits [][]Flight, history map[Position]bool) Position {
+func guessNext(flightUnits []FlightGroup, history map[Position]bool) Position {
 	headMap := map[Position]int{}
 	var max Position
 	for _, unit := range flightUnits {
@@ -118,10 +119,10 @@ func guessNext(flightUnits [][]Flight, history map[Position]bool) Position {
 }
 
 // judge guess result
-func judgeResult(p Position, expected []Flight) int {
+func judgeResult(p Position, expected FlightGroup) int {
 	r := 0
 	for _, flight := range expected {
-		if p.isHead(flight) {
+		if p.isHeadOf(flight) {
 			r = 2
 			break
 		} else {
