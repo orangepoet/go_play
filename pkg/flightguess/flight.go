@@ -1,10 +1,12 @@
 package flightguess
 
+// Position 位置
 type Position struct {
 	x int
 	y int
 }
 
+// Body 机身
 type Body []Position
 
 // Flight Model
@@ -38,9 +40,9 @@ func (p *Position) isBodyOf(f *Flight) bool {
 	return false
 }
 
-func filter(flights []*Flight, predicate func(flight *Flight) bool) []*Flight {
+func (fg FlightGroup) filter(predicate func(flight *Flight) bool) FlightGroup {
 	var filtered []*Flight
-	for _, x := range flights {
+	for _, x := range fg {
 		if predicate(x) {
 			filtered = append(filtered, x)
 		}

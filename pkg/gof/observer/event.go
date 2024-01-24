@@ -1,14 +1,16 @@
-package oop
+package observer
+
+import (
+	"fmt"
+)
 
 // Event 类型表示一个事件
 type Event struct {
 	Message string
 }
 
+// EventHandler 事件处理器
 type EventHandler func(event Event)
-
-// EventHandler 类型是处理事件的函数类型
-//type EventHandler func(event Event)
 
 // EventEmitter 类型表示事件发射器
 type EventEmitter struct {
@@ -20,7 +22,20 @@ func (emitter *EventEmitter) On(eventType string, handler EventHandler) {
 	if emitter.Handlers == nil {
 		emitter.Handlers = make(map[string][]EventHandler)
 	}
+
 	emitter.Handlers[eventType] = append(emitter.Handlers[eventType], handler)
+}
+
+func (emitter *EventEmitter) Off(eventType string, handler EventHandler) {
+	handlers := emitter.Handlers[eventType]
+	for i, e := range handlers {
+		addr0 := fmt.Sprintf("%p", e)
+		addr1 := fmt.Sprintf("%p", handler)
+		if addr0 == addr1 {
+			emitter.Handlers[eventType] = append(handlers[:i], handlers[i+1:]...)
+			break
+		}
+	}
 }
 
 // Emit 方法用于发射事件

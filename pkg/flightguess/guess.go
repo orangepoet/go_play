@@ -5,53 +5,54 @@ import (
 	"time"
 )
 
-// start guess
+// Start guess
 func Start() {
-
 	start := time.Now()
 	flightGroups := listFlightGroup()
 
 	expected := []*Flight{
-		makeFlight(Position{3, 3}, UP), makeFlight(Position{6, 6}, DOWN), makeFlight(Position{8, 10}, DOWN),
+		makeFlight(Position{3, 3}, UP),
+		makeFlight(Position{6, 6}, DOWN),
+		makeFlight(Position{8, 10}, DOWN),
 	}
 
 	left := len(expected)
 
-	history := map[Position]bool{}
+	history := make(map[Position]interface{})
 	times := 0
 	for {
 		next := guessNext(flightGroups, history)
-		println(fmt.Sprintf("guess pos: (%d, %d)", next.x, next.y))
-		history[next] = true
+		fmt.Printf("guess pos: (%d, %d)", next.x, next.y)
+		history[next] = 0
 		guessResult := judgeResult(next, expected)
-		println(fmt.Sprintf("guessResult: %d", guessResult))
+		fmt.Printf("guessResult: %d\n", guessResult)
 		if guessResult == 2 {
 			left--
 			if left == 0 {
-				println(fmt.Sprintf("attack all, WIN, times: %d", times))
+				fmt.Printf("attack all, WIN, times: %d", times)
 				break
 			}
 		}
 		times++
 		if times > 20 {
-			println("failed, guess exceed max times")
+			fmt.Println("failed, guess exceed max times")
 			break
 		}
 
 		flightGroups = refreshGroups(flightGroups, next, guessResult)
-		println(fmt.Sprintf("left case size: %d", len(flightGroups)))
+		fmt.Printf("left case size: %d", len(flightGroups))
 	}
 
 	elapse := time.Since(start)
-	println(fmt.Sprintf("all elaspsed: %d (ms)", elapse.Milliseconds()))
+	fmt.Printf("all elaspsed: %d (ms)\n", elapse.Milliseconds())
 }
 
 // branch reduction
 func refreshGroups(groups []FlightGroup, p Position, result int) []FlightGroup {
-	removes := map[int]bool{}
+	removes := make(map[int]interface{})
 	for idx, g := range groups {
 		if !filterGroup(g, p, result) {
-			removes[idx] = true
+			removes[idx] = 0
 		}
 	}
 	gs := make([]FlightGroup, 0)
@@ -98,9 +99,9 @@ func filterGroup(group FlightGroup, p Position, r int) bool {
 }
 
 // guess next
-func guessNext(flightUnits []FlightGroup, history map[Position]bool) Position {
+func guessNext(flightUnits []FlightGroup, history map[Position]interface{}) Position {
 	headMap := map[Position]int{}
-	var max Position
+	var max *Position
 	for _, unit := range flightUnits {
 		for _, flight := range unit {
 			_, ok := history[flight.head]
@@ -108,14 +109,14 @@ func guessNext(flightUnits []FlightGroup, history map[Position]bool) Position {
 				continue
 			}
 			headMap[flight.head] = headMap[flight.head] + 1
-			if max.x == 0 {
-				max = flight.head
-			} else if headMap[flight.head] > headMap[max] {
-				max = flight.head
+			if max == nil {
+				max = &flight.head
+			} else if headMap[flight.head] > headMap[*max] {
+				max = &flight.head
 			}
 		}
 	}
-	return max
+	return *max
 }
 
 // judge guess result

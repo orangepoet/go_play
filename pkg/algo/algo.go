@@ -1,12 +1,12 @@
-// algorithm impl by go
 package algo
 
+// ListNode 链表节点
 type ListNode struct {
 	Val  int
 	Next *ListNode
 }
 
-// jump game
+// canJump: jump game
 func canJump(nums []int) bool {
 	m := 0
 	last := len(nums)

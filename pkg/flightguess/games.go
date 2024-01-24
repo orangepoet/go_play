@@ -5,11 +5,7 @@ import (
 	"time"
 )
 
-type Config struct {
-	mapSize         int
-	flightGroupSize int
-}
-
+// FlightGroup 飞机组
 type FlightGroup []*Flight
 
 func listFlightGroup() []FlightGroup {
@@ -19,7 +15,7 @@ func listFlightGroup() []FlightGroup {
 	allFlights := listAllFlight()
 	listFlightGroup0(FlightGroup{}, allFlights, &allFlightGroups)
 
-	println(fmt.Sprintf("listFlightGroup elapsed: %d (ms)", time.Since(start).Milliseconds()))
+	fmt.Printf("listFlightGroup elapsed: %d (ms)\n", time.Since(start).Milliseconds())
 	return allFlightGroups
 }
 
@@ -70,9 +66,14 @@ func listAllFlight() FlightGroup {
 // list all flights with head equals (x,y)
 func listFlightsByHead(x, y int) FlightGroup {
 	head := Position{x, y}
-	flights := []*Flight{makeFlight(head, DOWN), makeFlight(head, UP), makeFlight(head, LEFT), makeFlight(head, RIGHT)}
-	return filter(flights, func(flight *Flight) bool {
-		for _, p := range flight.positions() {
+	flights := FlightGroup{
+		makeFlight(head, DOWN),
+		makeFlight(head, UP),
+		makeFlight(head, LEFT),
+		makeFlight(head, RIGHT),
+	}
+	return flights.filter(func(f *Flight) bool {
+		for _, p := range f.positions() {
 			if p.x <= 0 || p.x > MapSize || p.y <= 0 || p.y > MapSize {
 				return false
 			}

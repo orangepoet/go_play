@@ -132,7 +132,7 @@ func TestPosition_isPartOf(t *testing.T) {
 
 func Test_filter(t *testing.T) {
 	type args struct {
-		flights   []*Flight
+		flights   FlightGroup
 		predicate func(flight *Flight) bool
 	}
 	tests := []struct {
@@ -144,7 +144,7 @@ func Test_filter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := filter(tt.args.flights, tt.args.predicate); !reflect.DeepEqual(got, tt.want) {
+			if got := tt.args.flights.filter(tt.args.predicate); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("filter() = %v, want %v", got, tt.want)
 			}
 		})

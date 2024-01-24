@@ -1,4 +1,4 @@
-package oop
+package observer
 
 import (
 	"fmt"
