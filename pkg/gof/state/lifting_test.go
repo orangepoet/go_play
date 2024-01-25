@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func TestEvent(t *testing.T) {
+func TestLifting(t *testing.T) {
 	commands := []Command{
 		{commandType: COMMAND_RUN, expectState: STATE_RUNNING},
 		{commandType: COMMAND_OPEN, expectState: STATE_OPEN},
