@@ -93,3 +93,192 @@ func Test_mergeListNode(t *testing.T) {
 		})
 	}
 }
+
+func Test_preOrder(t *testing.T) {
+	//     1
+	//   2    5
+	// 3  4  6   7
+	// ->  1   2  3  4  5 6 7
+	tn := &TreeNode{
+		val: 1,
+		left: &TreeNode{
+			val: 2, left: &TreeNode{val: 3}, right: &TreeNode{val: 4},
+		},
+		right: &TreeNode{
+			val: 5, left: &TreeNode{
+				val: 6,
+			}, right: &TreeNode{
+				val: 7,
+			},
+		},
+	}
+	ans := preOrder(tn)
+	want := []int{1, 2, 3, 4, 5, 6, 7}
+	if !reflect.DeepEqual(ans, want) {
+		t.Errorf("preOrder = %v, want %v", ans, want)
+	}
+}
+
+func Test_addList(t *testing.T) {
+	ans := addList(makeList([]int{2, 4, 3}), makeList([]int{5, 6, 4}))
+	wanted := makeList([]int{7, 0, 8})
+	if !reflect.DeepEqual(ans, wanted) {
+		t.Errorf("addList() = %v, want %v", ans, wanted)
+	}
+}
+
+func Test_generateParenthesis(t *testing.T) {
+	ans := generateParenthesis(3)
+	wanted := []string{"((()))", "(()())", "(())()", "()(())", "()()()"}
+	if !reflect.DeepEqual(ans, wanted) {
+		t.Errorf("addList() = %v, want %v", ans, wanted)
+	}
+}
+
+func Test_removeNthFromEnd(t *testing.T) {
+	want := makeList([]int{1, 2, 3, 4, 6})
+	if got := removeNthFromEnd(makeList([]int{1, 2, 3, 4, 5, 6}), 4); !reflect.DeepEqual(got, want) {
+		t.Errorf("removeNthFromEnd() = %v, want %v", got, want)
+	}
+}
+
+//if got := makeChange(3000, []int{1, 7, 9}); got != 334 {
+//		t.Errorf("makeChange() = %v, want %v", got, 334)
+//	}
+//	if got := makeChange(1, []int{1, 7, 9}); got != 1 {
+//		t.Errorf("makeChange() = %v, want %v", got, 1)
+//	}
+//	if got := makeChange(2, []int{1, 7, 9}); got != 2 {
+//		t.Errorf("makeChange() = %v, want %v", got, 2)
+//	}
+
+func Test_makeChange(t *testing.T) {
+	type args struct {
+		n     int
+		coins []int
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{name: "t1", args: args{n: 3000, coins: []int{1, 7, 9}}, want: 334},
+		{name: "t2", args: args{n: 1, coins: []int{1, 7, 9}}, want: 1},
+		{name: "t3", args: args{n: 2, coins: []int{1, 7, 9}}, want: 2},
+		{name: "t4", args: args{n: 6, coins: []int{1, 7, 9}}, want: 6},
+		{name: "t5", args: args{n: 7, coins: []int{1, 7, 9}}, want: 1},
+		{name: "t6", args: args{n: 16, coins: []int{1, 7, 9}}, want: 2},
+		{name: "t7", args: args{n: 17, coins: []int{1, 7, 9}}, want: 3},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := makeChange(tt.args.n, tt.args.coins); got != tt.want {
+				t.Errorf("makeChange() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_patternMatch(t *testing.T) {
+	match := patternMatch("abba", "dog cat cat dog")
+	if !match {
+		t.Errorf("patternMatch() = %v, want %v", match, true)
+	}
+}
+
+func Test_maxDepth(t *testing.T) {
+	type args struct {
+		root *TreeNode
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{
+			args: args{
+				root: &TreeNode{
+					val:   1,
+					left:  &TreeNode{val: 2},
+					right: &TreeNode{val: 3},
+				},
+			},
+			want: 2,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := maxDepth(tt.args.root); got != tt.want {
+				t.Errorf("maxDepth() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_isMirror(t *testing.T) {
+	r1 := &TreeNode{val: 0,
+		left: &TreeNode{val: 1,
+			left:  &TreeNode{val: 2},
+			right: &TreeNode{val: 3},
+		},
+		right: &TreeNode{val: 1,
+			left:  &TreeNode{val: 2},
+			right: &TreeNode{val: 3},
+		},
+	}
+	r2 := &TreeNode{val: 0,
+		left: &TreeNode{val: 1,
+			left:  &TreeNode{val: 2},
+			right: &TreeNode{val: 3}},
+		right: &TreeNode{val: 1,
+			left:  &TreeNode{val: 3},
+			right: &TreeNode{val: 2},
+		},
+	}
+	type args struct {
+		node *TreeNode
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{args: args{node: r1}, want: false},
+		{args: args{node: r2}, want: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := isMirror(tt.args.node); got != tt.want {
+				t.Errorf("isMirror() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_minPathSum(t *testing.T) {
+	type args struct {
+		grid [][]int
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{args: args{grid: [][]int{
+			{1, 3, 1},
+			{1, 5, 1},
+			{4, 2, 1},
+		}}, want: 7},
+		{args: args{grid: [][]int{
+			{1, 2, 3},
+			{4, 5, 6},
+		}}, want: 12},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := minPathSum(tt.args.grid); got != tt.want {
+				t.Errorf("minPathSum() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
