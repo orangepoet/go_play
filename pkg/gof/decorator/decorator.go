@@ -1,23 +1,34 @@
 package decorator
 
-import "fmt"
+import (
+	"log"
+)
 
 type Handler func(s string)
 
+// HandlerDecorator mapping Handler -> Handler
 type HandlerDecorator func(Handler) Handler
 
 var greetingHandler HandlerDecorator = func(handler Handler) Handler {
 	return func(s string) {
-		s = "hello, " + s + ", welcome"
+		s2 := "hello, " + s + ", welcome"
+		log.Printf("[greetingHandler] s from %s -> %s\n", s, s2)
+		handler(s2)
+		log.Println("[greetingHandler]", "ending")
+	}
+}
+
+var logHandler HandlerDecorator = func(handler Handler) Handler {
+	return func(s string) {
 		handler(s)
-		fmt.Println("ending")
+		log.Println("[logHandler]", s)
 	}
 }
 
 func CompositeHandler(handler Handler, decorators ...HandlerDecorator) Handler {
-	var h Handler
+	var h = handler
 	for i := len(decorators) - 1; i >= 0; i-- {
-		h = decorators[i](handler)
+		h = decorators[i](h)
 	}
 	return h
 }

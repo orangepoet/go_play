@@ -1,16 +1,16 @@
 package decorator
 
 import (
-	"fmt"
+	"log"
 	"testing"
 )
 
 func Test_decorator(t *testing.T) {
 	var handler = func(s string) {
-		fmt.Println(s)
+		log.Println("[main]", s)
 	}
 	decorators := make([]HandlerDecorator, 0)
-	decorators = append(decorators, greetingHandler)
+	decorators = append(decorators, greetingHandler, logHandler)
 	ch := CompositeHandler(handler, decorators...)
 	ch("orange_cheng")
 }

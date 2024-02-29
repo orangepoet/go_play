@@ -4,7 +4,7 @@ package flightguess
 type Direction int
 
 const (
-	UNKNOWN Direction = iota
+	_ Direction = iota
 	// DOWN 向下
 	DOWN
 	// UP 向上
