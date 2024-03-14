@@ -1,5 +1,125 @@
 package fp
 
+import (
+	"fmt"
+	"log"
+	"sync"
+	"time"
+)
+
+func Chan[T any](xs []T) <-chan T {
+	out := make(chan T)
+	go func() {
+		for _, n := range xs {
+			out <- n
+			log.Println("Chan <-", n)
+			time.Sleep(5 * time.Millisecond)
+		}
+		close(out)
+	}()
+	return out
+}
+
+type PipeFunc[T any] func(<-chan T) <-chan T
+
+func pipeline[T any](xs []T, pipeFns ...PipeFunc[T]) <-chan T {
+	ch := Chan(xs)
+	for i := range pipeFns {
+		ch = pipeFns[i](ch)
+	}
+	return ch
+}
+
+func Map0[T, U any](mapTo func(x T) U) func(in <-chan T) <-chan U {
+	return func(in <-chan T) <-chan U {
+		out := make(chan U)
+		go func() {
+			for x := range in {
+				log.Println("Map0 handle", x)
+				out <- mapTo(x)
+				time.Sleep(15 * time.Millisecond)
+			}
+			close(out)
+		}()
+		return out
+	}
+}
+
+func Merge[T any](ins []<-chan T) <-chan T {
+	out := make(chan T)
+	for _, in := range ins {
+		go func(c <-chan T) {
+			for e := range c {
+				out <- e
+			}
+		}(in)
+	}
+	return out
+}
+
+func FlatMap[T, U any](flatMap func(x T) []U) func(in <-chan T) <-chan U {
+	return func(in <-chan T) <-chan U {
+		out := make(chan U)
+		time.Sleep(3 * time.Second)
+		go func() {
+
+			for x := range in {
+				log.Println("FlatMap <-", x)
+				for _, u := range flatMap(x) {
+					log.Println("FlatMap.loop <-", u)
+					out <- u
+					time.Sleep(20 * time.Millisecond)
+				}
+			}
+			close(out)
+		}()
+		return out
+	}
+}
+
+func Reduce[T any](reduce func(a, b T) T) func(in <-chan T) T {
+	return func(in <-chan T) T {
+		var wg sync.WaitGroup
+		wg.Add(1)
+		var c T
+		go func() {
+			for e1 := range in {
+				c = reduce(c, e1)
+			}
+			time.Sleep(time.Second)
+			wg.Done()
+		}()
+		wg.Wait()
+		return c
+	}
+}
+
+// Foreach Sync Execute method
+func Foreach[T any](handle func(x T)) func(in <-chan T) {
+	return func(in <-chan T) {
+		for x := range in {
+			fmt.Println("handle", x)
+			handle(x)
+		}
+	}
+}
+
+func Filter0[T any](predicate func(x T) bool) func(in <-chan T) <-chan T {
+	return func(in <-chan T) <-chan T {
+		out := make(chan T)
+		go func() {
+			for x := range in {
+				fmt.Println("Filter0 handle", x)
+				if predicate(x) {
+					out <- x
+				}
+			}
+			close(out)
+		}()
+		return out
+	}
+}
+
 // Split 集合分割
 func Split[T any](predicate func(x T) bool) func(xs []T) ([]T, []T) {
 	return func(xs []T) ([]T, []T) {
