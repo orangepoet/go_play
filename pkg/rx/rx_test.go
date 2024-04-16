@@ -25,13 +25,22 @@ func Test1(t *testing.T) {
 }
 
 func TestMap(t *testing.T) {
-	observe := rxgo.Just(1, 2, 3)().
+	observable := rxgo.Just(1, 2, 3)().
 		Map(func(_ context.Context, i interface{}) (interface{}, error) {
-			return i.(int) * 10, nil
-		}).Observe()
-	for item := range observe {
-		fmt.Println(item.V)
-	}
+			return i.(int) * i.(int), nil
+		}).
+		Filter(func(i interface{}) bool {
+			return i.(int)%2 == 0
+		})
+	subscription := observable.
+		ForEach(func(i interface{}) {
+			fmt.Println(i)
+		}, func(err error) {
+			// err handle
+		}, func() {
+			fmt.Println("complete")
+		})
+	<-subscription
 }
 
 func TestProducer(t *testing.T) {

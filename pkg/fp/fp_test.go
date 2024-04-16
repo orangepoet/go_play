@@ -41,6 +41,8 @@ func TestGroupBy(t *testing.T) {
 
 func TestMap(t *testing.T) {
 	s := []int{1, 2, 3, 4}
+	//ans := Map(func(x int) int { return x * 2 })(Filter(func(x int) bool { return x%2 == 0 })(s))
+
 	strings := Map(func(x int) string {
 		return "e:" + strconv.Itoa(x)
 	})(s)
@@ -67,16 +69,17 @@ func TestStream(t *testing.T) {
 }
 
 func TestStreamPipeline(t *testing.T) {
-	s := []int{2, 4, 10}
-	addOne := func(x int) int { return x + 1 }
-	divideByFive := func(x int) bool {
-		return x%5 == 0
+	list := []int{1, 2, 3}
+	sqFn := func(x int) int { return x * x }
+	isOddFn := func(x int) bool {
+		return x%2 == 0
 	}
-	ret := make([]int, 0)
-	for n := range pipeline(s, Map0(addOne), Filter0(divideByFive)) {
-		ret = append(ret, n)
+	ret2 := Pipeline(list, Map0(sqFn), Filter0(isOddFn))
+	fmt.Println(ret2)
+	//time.Sleep(100 * time.Second)
+	for n := range ret2 {
+		fmt.Println(n)
 	}
-	fmt.Println(ret)
 }
 
 func TestFlatMap(t *testing.T) {
@@ -99,7 +102,16 @@ func TestFlatMap(t *testing.T) {
 	})(cities)
 	fmt.Println("reduce->", reduce)
 	time.Sleep(60 * time.Second)
+}
 
+func TestFanInFanOut(t *testing.T) {
+	in := Chan([]int{2, 3})
+	addOneFn := func(x int) int { return x + 1 }
+	c1 := Map0(addOneFn)(in)
+	c2 := Map0(addOneFn)(in)
+	for n := range Merge1(c1, c2) {
+		fmt.Println(n)
+	}
 }
 
 type City struct {
@@ -109,4 +121,23 @@ type City struct {
 type Province struct {
 	name   string
 	cities []City
+}
+
+func TestCh(t *testing.T) {
+	c := make(chan int, 2)
+	c <- 1
+	c <- 2
+	close(c)
+	go func() {
+		for {
+			select {
+			case in, ok := <-c:
+				if !ok {
+					return
+				}
+				fmt.Println(in)
+			}
+		}
+	}()
+	time.Sleep(10 * time.Second)
 }

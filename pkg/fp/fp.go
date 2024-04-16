@@ -12,8 +12,8 @@ func Chan[T any](xs []T) <-chan T {
 	go func() {
 		for _, n := range xs {
 			out <- n
-			log.Println("Chan <-", n)
-			time.Sleep(5 * time.Millisecond)
+			//log.Println("Chan <-", n)
+			//time.Sleep(5 * time.Millisecond)
 		}
 		close(out)
 	}()
@@ -22,7 +22,7 @@ func Chan[T any](xs []T) <-chan T {
 
 type PipeFunc[T any] func(<-chan T) <-chan T
 
-func pipeline[T any](xs []T, pipeFns ...PipeFunc[T]) <-chan T {
+func Pipeline[T any](xs []T, pipeFns ...PipeFunc[T]) <-chan T {
 	ch := Chan(xs)
 	for i := range pipeFns {
 		ch = pipeFns[i](ch)
@@ -35,9 +35,8 @@ func Map0[T, U any](mapTo func(x T) U) func(in <-chan T) <-chan U {
 		out := make(chan U)
 		go func() {
 			for x := range in {
-				log.Println("Map0 handle", x)
 				out <- mapTo(x)
-				time.Sleep(15 * time.Millisecond)
+				fmt.Println("Map0", x)
 			}
 			close(out)
 		}()
@@ -54,6 +53,42 @@ func Merge[T any](ins []<-chan T) <-chan T {
 			}
 		}(in)
 	}
+	return out
+}
+
+func Merge1[T any](c1, c2 <-chan T) <-chan T {
+	out := make(chan T)
+	go func() {
+		for {
+			out <- <-c1
+		}
+	}()
+	go func() {
+		for {
+			out <- <-c2
+		}
+	}()
+
+	return out
+}
+
+func Merge0[T any](cs ...<-chan T) <-chan T {
+	var wg sync.WaitGroup
+	out := make(chan T)
+
+	wg.Add(len(cs))
+	for _, c := range cs {
+		go func(c <-chan T) {
+			for n := range c {
+				out <- n
+			}
+			wg.Done()
+		}(c)
+	}
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
 	return out
 }
 
@@ -109,7 +144,6 @@ func Filter0[T any](predicate func(x T) bool) func(in <-chan T) <-chan T {
 		out := make(chan T)
 		go func() {
 			for x := range in {
-				fmt.Println("Filter0 handle", x)
 				if predicate(x) {
 					out <- x
 				}
