@@ -1,6 +1,8 @@
 package internal
 
-import "strings"
+import (
+	"strings"
+)
 
 // ListNode 链表节点
 type ListNode struct {
@@ -317,4 +319,76 @@ func minPathSum(grid [][]int) int {
 		}
 	}
 	return dp[m-1][n-1]
+}
+
+func searchRange(nums []int, target int) []int {
+	low, high := 0, len(nums)-1
+	for low <= high {
+		mid := (low + high) >> 1
+		if target > nums[mid] {
+			low = mid + 1
+		} else if target < nums[mid] {
+			high = mid - 1
+		} else {
+			start, end := mid, mid
+			for start-1 >= 0 && nums[start-1] == target {
+				start--
+			}
+			for end+1 <= len(nums)-1 && nums[end+1] == target {
+				end++
+			}
+			return []int{start, end}
+		}
+	}
+	return []int{-1, -1}
+}
+
+// public List<Integer> rightSideView(TreeNode root) {
+func rightSideView(root *TreeNode) []int {
+	ret := make([]int, 0)
+
+	if root == nil {
+		return ret
+	}
+
+	queue := make([]*TreeNode, 0)
+	queue = append(queue, root)
+
+	start, end := 0, 0
+	for start <= end {
+		ret = append(ret, queue[end].val)
+		for i := start; i <= end; i++ {
+			if queue[i].left != nil {
+				queue = append(queue, queue[i].left)
+			}
+			if queue[i].right != nil {
+				queue = append(queue, queue[i].right)
+			}
+		}
+		start, end = end+1, len(queue)-1
+	}
+
+	return ret
+}
+
+func lengthOfLongestSubstring(s string) int {
+	if len(s) == 0 {
+		return 0
+	}
+	max := 0
+	m := make(map[byte]int)
+	for start, end := 0, 0; end < len(s); end++ {
+		x := s[end]
+		if v, ok := m[x]; ok {
+			start = v + 1
+		} else {
+			width := end - start + 1
+			if width > max {
+				max = width
+			}
+		}
+		m[x] = end
+	}
+
+	return max
 }

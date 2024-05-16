@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"math/rand"
 	"sync"
+	"testing"
 	"time"
 )
 
-func testGr() {
+func TestName(t *testing.T) {
 	var wg sync.WaitGroup
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))

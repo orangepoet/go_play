@@ -7,8 +7,8 @@ import (
 	"net"
 	"net/http"
 	"net/rpc"
-	"sync"
 	"testing"
+	"time"
 )
 
 type Args struct {
@@ -43,15 +43,7 @@ func StartServer() {
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		_ = http.Serve(l, nil)
-		wg.Done()
-	}()
-	wg.Wait()
-
-	fmt.Println("server exit")
+	_ = http.Serve(l, nil)
 }
 
 func ClientInvoke() {
@@ -72,6 +64,10 @@ func ClientInvoke() {
 }
 
 func TestRpc(t *testing.T) {
-	StartServer()
+	go func() {
+		StartServer()
+	}()
+	time.Sleep(1 * time.Second)
+
 	ClientInvoke()
 }

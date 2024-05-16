@@ -2,6 +2,7 @@
 package internal
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -280,5 +281,69 @@ func Test_minPathSum(t *testing.T) {
 				t.Errorf("minPathSum() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func Test_SearchRange(t *testing.T) {
+	nums := []int{5, 7, 7, 8, 8, 10}
+	target := 7
+	r := searchRange(nums, target)
+	fmt.Println(r)
+}
+
+func Test_RightSideView(t *testing.T) {
+	//        1
+	//     2     5
+	//   3   4  6  7
+	root := &TreeNode{
+		val: 1,
+		left: &TreeNode{
+			val: 2,
+			left: &TreeNode{
+				val: 3,
+			},
+			right: &TreeNode{
+				val: 4,
+			},
+		},
+		right: &TreeNode{
+			val: 5,
+			left: &TreeNode{
+				val: 6,
+			},
+			right: &TreeNode{
+				val: 7,
+			},
+		},
+	}
+	ret := rightSideView(root)
+	fmt.Println(ret)
+}
+
+func Test_LongSubString(t *testing.T) {
+	l := lengthOfLongestSubstring("abcabcbb")
+	fmt.Println(l)
+	if l != 3 {
+		t.Errorf("length = %v, want %v", l, 3)
+	}
+
+	l2 := lengthOfLongestSubstring("bbbbbb")
+	fmt.Println(l2)
+	if l2 != 1 {
+		t.Errorf("length = %v, want %v", l, 3)
+	}
+	l3 := lengthOfLongestSubstring("pwwkew")
+	fmt.Println(l3)
+	if l3 != 3 {
+		t.Errorf("length = %v, want %v", l, 3)
+	}
+	l4 := lengthOfLongestSubstring(" ")
+	fmt.Println(l4)
+	if l4 != 1 {
+		t.Errorf("length = %v, want %v", l, 3)
+	}
+	l5 := lengthOfLongestSubstring("au")
+	if l5 != 2 {
+		t.Errorf("length = %v, want %v", l, 3)
 	}
 }
