@@ -345,5 +345,34 @@ func Test_LongSubString(t *testing.T) {
 	l5 := lengthOfLongestSubstring("au")
 	if l5 != 2 {
 		t.Errorf("length = %v, want %v", l, 3)
+
 	}
+}
+
+func Test_IsLands(t *testing.T) {
+	grid := [][]int{
+		{1, 1, 0, 0, 0},
+		{1, 1, 0, 0, 0},
+		{0, 0, 1, 0, 0},
+		{0, 0, 1, 0, 0},
+		{0, 0, 0, 1, 1},
+	}
+	nums := numIslands(grid)
+	if nums != 3 {
+		t.Errorf("nums = %v, want %v", nums, 3)
+	}
+}
+
+func Test_weightSelect(t *testing.T) {
+	vw := map[int]int{1: 1, 2: 0, 3: 2, 4: 1}
+	var valueMap = make(map[int]int)
+	for i := 0; i < 10000; i++ {
+		v, got := weightSelect(vw)
+		if !got {
+			fmt.Errorf("not got")
+		}
+		valueMap[v] = valueMap[v] + 1
+	}
+	fmt.Printf("%v\n", valueMap)
+
 }

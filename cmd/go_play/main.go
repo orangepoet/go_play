@@ -1,14 +1,36 @@
 package main
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+	"time"
+)
 
 func main() {
-	var foo *Foo
+	bgCtx := context.Background()
+	ctx, cancelFunc := context.WithTimeout(bgCtx, time.Second*2)
+	defer func() {
+		cancelFunc()
+	}()
 
-	foo = nil
+	ch := tryGetResult()
+	select {
+	case <-ctx.Done():
+		fmt.Println("timeout")
+	case t := <-ch:
+		fmt.Println(t)
+		fmt.Println("received")
+	}
 
-	fmt.Printf("%v", foo)
+	fmt.Println("done")
 }
 
-type Foo struct {
+func tryGetResult() <-chan struct{} {
+	c := make(chan struct{})
+	go func() {
+		time.Sleep(1 * time.Second)
+		close(c)
+		fmt.Println("emit")
+	}()
+	return c
 }

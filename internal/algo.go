@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"math/rand"
 	"strings"
 )
 
@@ -391,4 +392,50 @@ func lengthOfLongestSubstring(s string) int {
 	}
 
 	return max
+}
+
+func numIslands(grid [][]int) int {
+	if len(grid) == 0 || len(grid[0]) == 0 {
+		return 0
+	}
+	y, x := len(grid), len(grid[0])
+	count := 0
+	for h := 0; h < x; h++ {
+		for v := 0; v < y; v++ {
+			if grid[v][h] == 1 {
+				numIslands0(grid, h, v, x, y)
+				count++
+			}
+		}
+	}
+	return count
+}
+
+func numIslands0(grid [][]int, x, y, xl, yl int) {
+	if x >= xl || y >= yl {
+		return
+	}
+	if grid[y][x] != 1 {
+		return
+	}
+	grid[y][x] = 0
+	numIslands0(grid, x+1, y, xl, yl)
+	numIslands0(grid, x, y+1, xl, yl)
+}
+
+// WeightSelect 权重选取
+func weightSelect(vw map[int]int) (int, bool) {
+	total := 0
+	for _, w := range vw {
+		total += w
+	}
+	target := rand.Intn(total)
+	cur := 0
+	for v, w := range vw {
+		cur += w
+		if cur > target {
+			return v, true
+		}
+	}
+	return 0, false
 }
