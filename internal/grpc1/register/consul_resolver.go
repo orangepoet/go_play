@@ -8,10 +8,6 @@ import (
 	"time"
 )
 
-func Init() {
-	resolver.Register(&ConsulRegister{})
-}
-
 type ConsulCli struct {
 	client *api.Client
 }
@@ -61,7 +57,11 @@ func (cli *ConsulCli) DiscoveryAddrLst(service string, tag string, lastIndex uin
 type ConsulRegister struct {
 }
 
-func (l ConsulRegister) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
+func (cr *ConsulRegister) Register() {
+	resolver.Register(cr)
+}
+
+func (l *ConsulRegister) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
 	lr := ConsulResolver{
 		name: target.Endpoint,
 		cc:   cc,
@@ -70,7 +70,7 @@ func (l ConsulRegister) Build(target resolver.Target, cc resolver.ClientConn, op
 	return &lr, nil
 }
 
-func (l ConsulRegister) Scheme() string {
+func (l *ConsulRegister) Scheme() string {
 	return "consul"
 }
 

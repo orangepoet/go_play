@@ -1,36 +1,19 @@
 package main
 
-import (
-	"context"
-	"fmt"
-	"time"
-)
+import "fmt"
 
-func main() {
-	bgCtx := context.Background()
-	ctx, cancelFunc := context.WithTimeout(bgCtx, time.Second*2)
-	defer func() {
-		cancelFunc()
-	}()
-
-	ch := tryGetResult()
-	select {
-	case <-ctx.Done():
-		fmt.Println("timeout")
-	case t := <-ch:
-		fmt.Println(t)
-		fmt.Println("received")
-	}
-
-	fmt.Println("done")
+type Foo struct {
+	Name string
 }
 
-func tryGetResult() <-chan struct{} {
-	c := make(chan struct{})
-	go func() {
-		time.Sleep(1 * time.Second)
-		close(c)
-		fmt.Println("emit")
-	}()
-	return c
+func main() {
+	var cId, pId uint64 = 4229, 5237
+	date := "2024-07-10"
+	key := fmt.Sprintf("mall:goods_total_stock_p:%d:cid:%d", pId, cId)
+	fmt.Println(key)
+
+	key2 := fmt.Sprintf("mall:"+"stock-ex"+":cid:%d"+"pid:%d"+":%s", cId, pId, date)
+
+	fmt.Println(key2)
+
 }

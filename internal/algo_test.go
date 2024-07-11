@@ -374,5 +374,4 @@ func Test_weightSelect(t *testing.T) {
 		valueMap[v] = valueMap[v] + 1
 	}
 	fmt.Printf("%v\n", valueMap)
-
 }
