@@ -1,19 +1,60 @@
 package main
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+
+	"github.com/samber/lo"
+)
 
 type Foo struct {
 	Name string
+	Age  int
 }
 
 func main() {
-	var cId, pId uint64 = 4229, 5237
-	date := "2024-07-10"
-	key := fmt.Sprintf("mall:goods_total_stock_p:%d:cid:%d", pId, cId)
-	fmt.Println(key)
+	errs := make([]error, 0)
+	for _, v := range lo.Range(10) {
+		if e := makeFunc(v); e != nil {
+			errs = append(errs, e)
+		}
+	}
+	fe := errors.Join(errs...)
+	fmt.Println(fe)
 
-	key2 := fmt.Sprintf("mall:"+"stock-ex"+":cid:%d"+"pid:%d"+":%s", cId, pId, date)
 
-	fmt.Println(key2)
+	for _, v:= range lo.Range(10) {
+		fmt.Println(v)
+	}
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+func makeFunc(v int) error {
+	if v%2 == 0 {
+		return fmt.Errorf("even number: %d", v)
+	}
+	return nil
+
+}
+
+func Xx() string {
+	return ""
 }
