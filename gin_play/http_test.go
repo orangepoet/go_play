@@ -1,12 +1,8 @@
-package gin
+package gin_play
 
 import (
 	"testing"
 )
-
-func TestHttpServer(t *testing.T) {
-	HttpServer()
-}
 
 func TestGinServer(t *testing.T) {
 	GinServer()

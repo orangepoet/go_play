@@ -1,10 +1,11 @@
-package gin
+package gin_play
 
 import (
-	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 var dataChan = make(chan string, 10)

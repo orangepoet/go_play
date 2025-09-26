@@ -1,5 +1,5 @@
 // algorithm test
-package play
+package algo
 
 import (
 	"fmt"

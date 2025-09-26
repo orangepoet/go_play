@@ -1,4 +1,4 @@
-package play
+package algo
 
 import (
 	"math/rand"
