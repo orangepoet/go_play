@@ -2,14 +2,24 @@ package play
 
 import (
 	"bytes"
+	"cmp"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"reflect"
+	"slices"
 	"sync"
 	"testing"
 	"time"
+
+	"testing/quick"
+
+	"github.com/agiledragon/gomonkey/v2"
+	"github.com/spf13/cast"
+	"golang.org/x/time/rate"
 )
 
 func TestX(t *testing.T) {
@@ -132,4 +142,409 @@ func TestLoopParallel(t *testing.T) {
 		}()
 	}
 	wg.Wait()
+}
+
+func TestSort(t *testing.T) {
+	arr := []int{5, 4, 3, 2, 1}
+	slices.SortFunc(arr, func(a, b int) int {
+		ret := cast.ToInt(a > b)
+		return ret
+	})
+	fmt.Println(arr)
+
+	arr2 := []int{5, 4, 3, 2, 1}
+	slices.SortFunc(arr2, func(a, b int) int {
+		ret := cmp.Compare(a, b)
+		return ret
+	})
+	fmt.Println(arr2)
+}
+
+type Sth struct {
+	Name string
+}
+
+func Test001(t *testing.T) {
+	var m map[int]Sth
+	s := m[1]
+	fmt.Println(s.Name)
+}
+
+func Test002(t *testing.T) {
+	arr := []int{1, 2, 3, 4, 5}
+	arr1 := arr[:10]
+	fmt.Println(arr1)
+}
+
+func Test003(t *testing.T) {
+	var t1 time.Time = time.Now().AddDate(0, 0, 1)
+	u := time.Until(t1)
+	fmt.Println(u.Seconds())
+
+	var t2 time.Time = time.Now().AddDate(0, 0, -1)
+	u2 := time.Until(t2)
+	fmt.Println(u2.Seconds())
+}
+
+func Test004(t *testing.T) {
+	handler := func() func(i int) bool {
+		m := make(map[int]bool)
+
+		return func(i int) bool {
+			if v, ok := m[i]; ok {
+				return v
+			} else {
+				v := getResult(i)
+				m[i] = v
+				return v
+			}
+		}
+	}
+
+	h := handler()
+	for i := 0; i < 10; i++ {
+		ret := h(1)
+		fmt.Println(ret)
+	}
+}
+
+func getResult(i int) bool {
+	fmt.Printf("计算 getResult(%d)\n", i) // 添加日志来验证是否重复计算
+	return i%2 == 0
+}
+
+func Test005(t *testing.T) {
+	var arr []int
+
+	for i := 0; i < 10; i++ {
+		arr = append(arr, i)
+	}
+
+	fmt.Println(arr)
+}
+
+func Test006(t *testing.T) {
+	fmt.Println("=== 使用 range (只执行一次) ===")
+	for _, item := range getSlice().arr {
+		fmt.Println(item)
+	}
+
+	fmt.Println("\n=== 使用传统 for 循环 (会重复执行) ===")
+	for i := 0; i < getSlice().len; i++ {
+		fmt.Println(getSlice().arr[i])
+	}
+
+	fmt.Println("\n=== 正确的传统 for 循环写法 (只执行一次) ===")
+	result := getSlice()
+	for i := 0; i < result.len; i++ {
+		fmt.Println(result.arr[i])
+	}
+}
+
+type Result struct {
+	arr []int
+	len int
+}
+
+func getSlice() *Result {
+	fmt.Println("调用 getSlice()") // 添加日志验证调用次数
+	arr := make([]int, 10)
+	for i := 0; i < 10; i++ {
+		arr[i] = i
+	}
+	return &Result{
+		arr: arr,
+		len: len(arr),
+	}
+}
+
+func Test007(t *testing.T) {
+	// 方式1：如果只是想等待30秒后结束，直接用 time.Sleep
+	fmt.Println("开始等待...")
+	time.Sleep(30 * time.Second)
+	fmt.Println("30秒后结束")
+}
+
+func Test007WithTicker(t *testing.T) {
+	// 方式2：如果需要定期执行某些操作，用 context 控制超时
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			fmt.Println("超时，程序结束")
+			return
+		case <-ticker.C:
+			fmt.Println("ticker")
+		}
+	}
+}
+
+func Test007Simple(t *testing.T) {
+	// 方式3：最简单的超时模式
+	done := make(chan bool)
+
+	// 启动一些工作
+	go func() {
+		time.Sleep(5 * time.Second) // 模拟工作
+		done <- true
+	}()
+
+	// 等待完成或超时
+	select {
+	case <-done:
+		fmt.Println("工作完成")
+	case <-time.After(30 * time.Second):
+		fmt.Println("工作超时")
+	}
+}
+
+// 任务重试器：失败时重试，直到成功或超时
+func Test008RetryTask(t *testing.T) {
+	// 模拟一个可能失败的任务
+	attemptCount := 0
+	task := func() error {
+		attemptCount++
+		fmt.Printf("尝试第 %d 次...\n", attemptCount)
+
+		// 模拟前几次失败，第4次成功
+		if attemptCount < 4 {
+			return fmt.Errorf("任务失败 (第%d次尝试)", attemptCount)
+		}
+		return nil // 成功
+	}
+
+	// 执行带重试的任务
+	err := retryWithTimeout(task, 30*time.Second, 2*time.Second)
+	if err != nil {
+		fmt.Printf("任务最终失败: %v\n", err)
+	} else {
+		fmt.Println("任务成功完成!")
+	}
+}
+
+// 通用的重试函数
+func retryWithTimeout(task func() error, timeout, retryInterval time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	ticker := time.NewTicker(retryInterval)
+	defer ticker.Stop()
+
+	// 立即执行第一次
+	if err := task(); err == nil {
+		return nil // 第一次就成功
+	} else {
+		fmt.Printf("任务失败: %v, 将重试...\n", err)
+	}
+
+	// 如果第一次失败，开始定期重试
+	for {
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("任务超时: %w", ctx.Err())
+		case <-ticker.C:
+			if err := task(); err == nil {
+				return nil // 重试成功
+			} else {
+				fmt.Printf("任务失败: %v, 继续重试...\n", err)
+			}
+		}
+	}
+}
+
+// 更高级的重试器：支持指数退避
+func Test009RetryWithBackoff(t *testing.T) {
+	attemptCount := 0
+	task := func() error {
+		attemptCount++
+		fmt.Printf("尝试第 %d 次...\n", attemptCount)
+
+		if attemptCount < 3 {
+			return fmt.Errorf("任务失败 (第%d次尝试)", attemptCount)
+		}
+		return nil
+	}
+
+	err := retryWithBackoff(task, 30*time.Second, 1*time.Second, 2.0, 5)
+	if err != nil {
+		fmt.Printf("任务最终失败: %v\n", err)
+	} else {
+		fmt.Println("任务成功完成!")
+	}
+}
+
+// 带指数退避的重试函数
+func retryWithBackoff(task func() error, timeout, initialInterval time.Duration, backoffMultiplier float64, maxRetries int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	interval := initialInterval
+
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		if err := task(); err == nil {
+			return nil // 成功
+		} else {
+			fmt.Printf("任务失败: %v\n", err)
+		}
+
+		// 检查是否还有时间重试
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("任务超时，共尝试 %d 次", attempt+1)
+		default:
+		}
+
+		// 如果不是最后一次尝试，等待后重试
+		if attempt < maxRetries-1 {
+			fmt.Printf("等待 %v 后重试...\n", interval)
+
+			timer := time.NewTimer(interval)
+			select {
+			case <-ctx.Done():
+				timer.Stop()
+				return fmt.Errorf("任务超时，共尝试 %d 次", attempt+1)
+			case <-timer.C:
+				// 指数退避：下次等待时间翻倍
+				interval = time.Duration(float64(interval) * backoffMultiplier)
+			}
+		}
+	}
+
+	return fmt.Errorf("达到最大重试次数 %d", maxRetries)
+}
+
+type A struct {
+	*B
+	Name string `json:"name,omitempty"`
+}
+
+type B struct {
+	P1 int    `json:"p1,omitempty"`
+	P2 string `json:"p2,omitempty"`
+}
+
+func Test010(t *testing.T) {
+	a := A{Name: "test", B: &B{P1: 1, P2: "2"}}
+	// a.P1 = 1
+	// a.P2 = "2"
+	bytes, _ := json.Marshal(a)
+	ret := string(bytes)
+	fmt.Println(ret)
+}
+
+func Test011(t *testing.T) {
+	limiter := rate.NewLimiter(rate.Limit(1), 1)
+	for i := 0; i < 1000; i++ {
+		testRateLimit(i, limiter)
+	}
+}
+
+func testRateLimit(i int, limiter *rate.Limiter) {
+
+	if err := limiter.Wait(context.Background()); err != nil {
+		fmt.Println("error", err)
+		return
+	}
+
+	fmt.Println("success", i)
+}
+
+func Test012(t *testing.T) {
+	c := make(chan int, 2)
+
+	c <- 1
+	c <- 2
+	close(c)
+
+	fmt.Println("=== 直接读取 ===")
+	fmt.Println(<-c) // 1
+	fmt.Println(<-c) // 2
+	fmt.Println(<-c) // 0 (零值)
+
+	fmt.Println("\n=== 使用 ok 检查 ===")
+	c2 := make(chan int, 2)
+	c2 <- 10
+	c2 <- 20
+	close(c2)
+
+	for {
+		value, ok := <-c2
+		if !ok {
+			fmt.Println("channel 已关闭，退出")
+			break
+		}
+		fmt.Printf("读取到值: %d\n", value)
+	}
+
+	fmt.Println("\n=== 使用 range 自动处理 ===")
+	c3 := make(chan int, 3)
+	c3 <- 100
+	c3 <- 200
+	c3 <- 300
+	close(c3)
+
+	for value := range c3 {
+		fmt.Printf("range 读取: %d\n", value)
+	}
+	fmt.Println("range 自动结束")
+}
+
+type Dao struct {
+}
+
+func NewDao() *Dao {
+	return &Dao{}
+}
+
+func (d *Dao) GetData() (int, error) {
+	return 1, nil
+}
+
+//go:noinline
+func GetData1() (int, error) {
+	return 1, nil
+}
+
+type Service struct {
+}
+
+func NewService() *Service {
+	return &Service{}
+}
+
+func (s *Service) GetData() (int, error) {
+	return NewDao().GetData()
+}
+
+func Test013(t *testing.T) {
+	dao := NewDao()
+	patch := gomonkey.ApplyMethod(reflect.TypeOf(dao), "GetData", func() (int, error) {
+		return 101, nil
+	})
+	defer patch.Reset()
+
+	service := NewService()
+	data, err := service.GetData()
+	if err != nil {
+		fmt.Println("error", err)
+	}
+	fmt.Println("data->", data)
+}
+
+func Add(a, b int) int {
+	return a + b
+}
+
+func TestAdd(t *testing.T) {
+	fn := func(a, b int) bool {
+		return Add(a, b) == a*b
+	}
+	if err := quick.Check(fn, nil); err != nil {
+		t.Error(err)
+	}
 }
